@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "react-query";
+import { Helmet } from "react-helmet";
 import {
   Route,
   Switch,
+  useHistory,
   useLocation,
   useParams,
   useRouteMatch,
 } from "react-router";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { fetchCoinInfo, fetchCoinTickers } from "../api";
 import Chart from "./Chart";
 import Price from "./Price";
 
@@ -22,6 +25,7 @@ const Header = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 `;
 
 const Title = styled.h1`
@@ -89,6 +93,17 @@ const Tab = styled.span<{ isActive: boolean }>`
   }
 `;
 
+const BackBtn = styled.span`
+  position: absolute;
+  left: 0;
+  font-size: 25px;
+  transition: color 0.1s ease-in-out;
+  &:hover {
+    cursor: pointer;
+    color: ${(props) => props.theme.accentColor};
+  }
+`;
+
 interface RouteState {
   name: string;
   symbol: string;
@@ -152,37 +167,40 @@ interface PriceData {
 }
 
 function Coin() {
-  const [loading, setLoading] = useState(false);
   const { coinId } = useParams<{ coinId: string }>();
   const { state } = useLocation<RouteState>();
-  const [info, setInfo] = useState<InfoData>();
-  const [priceInfo, setPriceInfo] = useState<PriceData>();
   const priceMatch = useRouteMatch("/:coinId/price");
   const chartMatch = useRouteMatch("/:coinId/chart");
+  const back = useHistory();
 
-  useEffect(() => {
-    (async () => {
-      const infoData = await (
-        await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
-      ).json();
+  const { isLoading: infoLoading, data: infoData } = useQuery<InfoData>(
+    ["info", coinId],
+    () => fetchCoinInfo(coinId)
+  );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery<PriceData>(
+    ["tickers", coinId],
+    () => fetchCoinTickers(coinId),
+    {
+      refetchInterval: 5000,
+    }
+  );
 
-      const priceData = await (
-        await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
-      ).json();
-
-      setInfo(infoData);
-      setPriceInfo(priceData);
-    })();
-  }, [coinId]);
+  const loading = infoLoading || tickersLoading;
 
   return (
     <Container>
+      <Helmet>
+        <title>
+          {state?.name ? state.name : loading ? "Loadig..." : infoData?.name}
+        </title>
+      </Helmet>
       <Header>
+        <BackBtn onClick={() => back.push("/")}>&larr;</BackBtn>
         <Title>
           <Img
-            src={`https://cryptoicon-api.vercel.app/api/icon/${info?.symbol.toLowerCase()}`}
+            src={`https://cryptoicon-api.vercel.app/api/icon/${infoData?.symbol.toLowerCase()}`}
           />
-          {state?.name ? state.name : loading ? "Loadig..." : info?.name}
+          {state?.name ? state.name : loading ? "Loadig..." : infoData?.name}
         </Title>
       </Header>
       {loading ? (
@@ -192,44 +210,56 @@ function Coin() {
           <Overview>
             <OverviewItem>
               <span>Rank:</span>
-              <span>{info?.rank}</span>
+              <span>{infoData?.rank}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Symbol:</span>
-              <span>{info?.symbol}</span>
+              <span>{infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
-              <span>Source:</span>
-              <span>{info?.open_source}</span>
+              <span>Price:</span>
+              <span>${tickersData?.quotes.USD.price.toFixed(3)}</span>
             </OverviewItem>
           </Overview>
-          <Description>{info?.description}</Description>
+          <Description>{infoData?.description}</Description>
           <Overview>
             <OverviewItem>
               <span>Total Suply:</span>
-              <span>{priceInfo?.total_supply}</span>
+              <span>{tickersData?.total_supply}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Max Suply:</span>
-              <span>{priceInfo?.max_supply}</span>
+              <span>{tickersData?.max_supply}</span>
             </OverviewItem>
           </Overview>
 
           <Tabs>
             <Tab isActive={chartMatch !== null}>
-              <Link to={`/${coinId}/chart`}>Chart</Link>
+              <Link to={`/${coinId}/chart`}>chart</Link>
             </Tab>
             <Tab isActive={priceMatch !== null}>
-              <Link to={`/${coinId}/price`}>Price</Link>
+              <Link
+                to={{
+                  pathname: `/${coinId}/price`,
+                  state: {
+                    sevenP: tickersData?.quotes.USD.percent_change_7d,
+                    dayP: tickersData?.quotes.USD.percent_change_24h,
+                    volume: tickersData?.quotes.USD.volume_24h,
+                    marketcap: tickersData?.quotes.USD.market_cap,
+                  },
+                }}
+              >
+                price
+              </Link>
             </Tab>
           </Tabs>
 
           <Switch>
-            <Route path={`/${coinId}/price`}>
+            <Route path={`/:coinId/price`}>
               <Price />
             </Route>
-            <Route path={`/${coinId}/chart`}>
-              <Chart />
+            <Route path={`/:coinId/chart`}>
+              <Chart coinId={coinId} />
             </Route>
           </Switch>
         </>
