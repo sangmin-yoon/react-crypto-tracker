@@ -4,20 +4,17 @@ import Coins from "./routes/Coins";
 
 const PUBLIC_URL = "https://sangmin-yoon.github.io/react-crypto-tracker";
 
-interface IRouterProps {
-  toggleDark: () => void;
-  isDark: boolean;
-}
+interface IRouterProps {}
 
-function Router({ toggleDark, isDark }: IRouterProps) {
+function Router({}: IRouterProps) {
   return (
     <BrowserRouter basename={process.env.PUBLIC_URL}>
       <Switch>
         <Route path="/:coinId">
-          <Coin isDark={isDark} />
+          <Coin />
         </Route>
         <Route path="/">
-          <Coins toggleDark={toggleDark} isDark={isDark} />
+          <Coins />
         </Route>
       </Switch>
     </BrowserRouter>
