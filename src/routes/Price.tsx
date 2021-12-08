@@ -7,7 +7,7 @@ const PriceWrapper = styled.div`
 
 const PriceItem = styled.div`
   padding: 15px;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${(props) => props.theme.cardBgColor};
   color: ${(porps) => porps.theme.textColor};
   margin-bottom: 10px;
   border-radius: 7px;
