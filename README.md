@@ -1,4 +1,4 @@
-# React MasterClass : Crypto Tracker
+# Crypto Tracker
 
 Crypto Tracker를 만들며 react 학습
 
