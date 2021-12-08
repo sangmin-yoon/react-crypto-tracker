@@ -16,7 +16,7 @@ interface IHistorical {
   volume: number;
   market_cap: number;
 }
-
+// close, high, low, open
 function Chart({ coinId }: CharProps) {
   const { isLoading, data } = useQuery<IHistorical[]>(
     ["ohlcv", coinId],
@@ -25,17 +25,23 @@ function Chart({ coinId }: CharProps) {
       refetchInterval: 10000,
     }
   );
+
   return (
     <div>
       {isLoading ? (
         "차트 로딩중..."
       ) : (
         <ApexChart
-          type="line"
+          type="candlestick"
           series={[
             {
               name: "price",
-              data: data?.map((price) => price.close),
+              data: data?.map((price) => {
+                return {
+                  x: price.time_close,
+                  y: [price.close, price.high, price.low, price.open],
+                };
+              }),
             },
           ]}
           options={{
@@ -52,29 +58,13 @@ function Chart({ coinId }: CharProps) {
             },
             xaxis: {
               type: "datetime",
-              categories: data?.map((time) => time.time_close.substring(5, 10)),
               axisBorder: { show: false },
-              axisTicks: { show: false },
             },
             yaxis: {
               show: false,
             },
-            stroke: {
-              curve: "smooth",
-              width: 2,
-            },
             grid: {
               show: false,
-            },
-            fill: {
-              type: "gradient",
-              gradient: { gradientToColors: ["#1dd1a1"], stops: [0, 100] },
-            },
-            colors: ["#2e86de"],
-            tooltip: {
-              y: {
-                formatter: (value) => `$${value.toFixed(3)}`,
-              },
             },
           }}
         />
