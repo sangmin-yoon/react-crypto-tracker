@@ -195,7 +195,7 @@ function Coin({ isDark }: ICoinProps) {
     <Container>
       <Helmet>
         <title>
-          {state?.name ? state.name : loading ? "Loadig..." : infoData?.name}
+          {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
         </title>
       </Helmet>
       <Header>
@@ -204,7 +204,7 @@ function Coin({ isDark }: ICoinProps) {
           <Img
             src={`https://cryptoicon-api.vercel.app/api/icon/${infoData?.symbol.toLowerCase()}`}
           />
-          {state?.name ? state.name : loading ? "Loadig..." : infoData?.name}
+          {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
         </Title>
       </Header>
       {loading ? (
